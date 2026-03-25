@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clawedle — Guess the AU Spot</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --surface: #242424;
+    --surface2: #2e2e2e;
+    --border: #3a3a3a;
+    --text: #f0ede6;
+    --text-muted: #888;
+    --au-red: #c8102e;
+    --au-gold: #e8b84b;
+    --correct: #538d4e;
+    --close: #b59f3b;
+    --wrong: #3a3a3a;
+    --correct-text: #6aaa64;
+    --close-text: #c9a84c;
+    --radius: 6px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Libre Franklin', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* HEADER */
+  header {
+    width: 100%;
+    max-width: 700px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .logo-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--au-red), var(--au-gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-subtitle {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); border-color: #555; }
+
+  .streak-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--au-gold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* MAIN CONTENT */
+  main {
+    width: 100%;
+    max-width: 700px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* GUESS COUNT */
+  .guess-indicator {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .guess-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.3s;
+  }
+  .guess-dot.used { background: var(--au-red); }
+  .guess-dot.current { background: var(--au-gold); box-shadow: 0 0 8px var(--au-gold); }
+
+  /* IMAGE VIEWER */
+  .image-container {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    position: relative;
+    background: #111;
+    aspect-ratio: 16/9;
+  }
+
+  .location-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.8s ease;
+    transform-origin: center center;
+  }
+
+  .zoom-label {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+
+  .guess-number-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(200, 16, 46, 0.85);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* ZOOMED-IN blur overlay for immersion */
+  .image-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
+    border-radius: 10px;
+  }
+
+  /* HINT BAR */
+  .hint-bar {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hint-bar span { color: var(--au-gold); font-weight: 600; }
+
+  /* PREVIOUS GUESSES */
+  .guesses-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .guess-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 13px;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .guess-num {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 700;
+    letter-spacing: 1px;
+    width: 20px;
+    flex-shrink: 0;
+  }
+
+  .guess-text { flex: 1; font-weight: 600; color: var(--text); }
+
+  .guess-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .tag-wrong    { background: var(--wrong); color: var(--text-muted); }
+  .tag-close    { background: var(--close); color: #fff; }
+  .tag-correct  { background: var(--correct); color: #fff; }
+
+  /* INPUT AREA */
+  .input-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .guess-input {
+    flex: 1;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .guess-input:focus { border-color: var(--au-red); }
+  .guess-input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+  .submit-btn {
+    background: var(--au-red);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 12px 24px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .submit-btn:hover { background: #a50d25; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; }
+
+  /* SUGGESTIONS DROPDOWN */
+  .suggestions {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: none;
+  }
+  .suggestions.visible { display: block; }
+
+  .suggestion-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .suggestion-item:hover { background: var(--surface); }
+
+  .suggestion-item::before {
+    content: '📍';
+    font-size: 14px;
+  }
+
+  /* RESULT SCREEN */
+  .result-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .result-overlay.show { display: flex; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .result-emoji { font-size: 56px; margin-bottom: 16px; }
+  .result-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .result-title.win  { color: var(--correct-text); }
+  .result-title.lose { color: var(--au-red); }
+
+  .result-location {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--au-gold);
+    margin-bottom: 6px;
+  }
+  .result-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-box {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 14px 8px;
+  }
+  .stat-num { font-family: 'Archivo Black', sans-serif; font-size: 28px; color: var(--text); }
+  .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  .result-share-btn {
+    width: 100%;
+    background: var(--correct);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 10px;
+  }
+  .result-share-btn:hover { filter: brightness(1.1); }
+
+  .next-puzzle {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  #countdown { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* HOW TO PLAY MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 90%;
+    max-width: 400px;
+    animation: popIn 0.3s ease;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .modal-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px;
+  }
+
+  .how-steps { display: flex; flex-direction: column; gap: 14px; }
+
+  .step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--au-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .step-text { font-size: 13px; line-height: 1.6; color: var(--text-muted); }
+  .step-text strong { color: var(--text); }
+
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 300;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* FOOTER */
+  footer {
+    margin-top: auto;
+    padding: 20px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+  footer a { color: var(--au-red); text-decoration: none; }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .logo-title { font-size: 22px; }
+    main { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-title">Clawedle</div>
+    <div class="logo-subtitle">American University · Daily</div>
+  </div>
+  <div class="header-actions">
+    <div class="streak-badge">🔥 <span id="streakNum">0</span></div>
+    <button class="icon-btn" id="helpBtn" title="How to play">?</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+
+  <!-- Guess dots -->
+  <div class="guess-indicator" id="guessDots"></div>
+
+  <!-- Image viewer -->
+  <div class="image-container">
+    <img class="location-image" id="locationImg" src="" alt="Guess the campus location" />
+    <div class="zoom-label" id="zoomLabel">🔍 ×8 ZOOM</div>
+    <div class="guess-number-badge" id="guessBadge">GUESS 1 OF 6</div>
+  </div>
+
+  <!-- Hint bar -->
+  <div class="hint-bar">
+    💡 Hint: <span id="hintText">A place where Eagles gather on campus.</span>
+  </div>
+
+  <!-- Previous guesses -->
+  <div class="guesses-list" id="guessesList"></div>
+
+  <!-- Input -->
+  <div class="input-area" id="inputArea">
+    <div class="input-row">
+      <input
+        type="text"
+        class="guess-input"
+        id="guessInput"
+        placeholder="Type a building or location…"
+        autocomplete="off"
+      />
+      <button class="submit-btn" id="submitBtn">Guess</button>
+    </div>
+    <div class="suggestions" id="suggestions"></div>
+  </div>
+
+</main>
+
+<footer>
+  A daily campus puzzle for <a href="https://american.edu" target="_blank">American University</a> Eagles · Not affiliated with AU
+</footer>
+
+<!-- RESULT OVERLAY -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-title" id="resultTitle">Eagle Eye!</div>
+    <div class="result-location" id="resultLocation"></div>
+    <div class="result-desc" id="resultDesc"></div>
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="stat-num" id="statStreak">0</div>
+        <div class="stat-label">Streak</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="statGuesses">—</div>
+        <div class="stat-label">Guesses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="statPlayed">0</div>
+        <div class="stat-label">Played</div>
+      </div>
+    </div>
+    <button class="result-share-btn" id="shareBtn">📋 Share Result</button>
+    <div class="next-puzzle">
+      Next Clawedle in <span id="countdown">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO PLAY MODAL -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">How to Play</div>
+      <button class="modal-close" id="closeHelp">✕</button>
+    </div>
+    <div class="how-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">You'll see a <strong>zoomed-in photo</strong> of somewhere on AU's campus.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Type a <strong>location, building, or landmark</strong> and submit your guess.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Each wrong guess <strong>zooms out</strong> the photo, revealing more of the scene.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Identify the location in <strong>6 guesses or fewer</strong>. A new puzzle drops every midnight!</div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--correct)"></div> Correct — you nailed it!</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--close)"></div> Close — same area or building complex</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--wrong)"></div> Wrong — try again</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── PUZZLE DATA ────────────────────────────────────────────────────────────
+// Each puzzle has a real AU location. Images use Google Street View Static API
+// format (URL-based) or can be replaced with actual campus photos.
+// The zoom levels simulate progressively zoomed-out views.
+
+const LOCATIONS = [
+  {
+    id: "kogod",
+    name: "Kogod School of Business",
+    aliases: ["kogod", "kogod school of business", "kogod business", "kogod school"],
+    description: "Home to AU's business school, featuring its iconic courtyard.",
+    hint: "Where Eagles sharpen their business acumen.",
+    // Using placeholder gradient images for demo; replace with real AU photos
+    images: [
+      { zoom: 8, src: generatePlaceholderSVG("kogod", 1) },
+      { zoom: 6, src: generatePlaceholderSVG("kogod", 2) },
+      { zoom: 4, src: generatePlaceholderSVG("kogod", 3) },
+      { zoom: 3, src: generatePlaceholderSVG("kogod", 4) },
+      { zoom: 2, src: generatePlaceholderSVG("kogod", 5) },
+      { zoom: 1, src: generatePlaceholderSVG("kogod", 6) },
+    ]
+  },
+  {
+    id: "kas",
+    name: "Kay Spiritual Life Center",
+    aliases: ["kay spiritual life center", "kay chapel", "kay spiritual", "kay center", "chapel"],
+    description: "AU's iconic nondenominational spiritual center on the quad.",
+    hint: "A place of reflection at the heart of campus.",
+    images: [
+      { zoom: 8, src: generatePlaceholderSVG("kay", 1) },
+      { zoom: 6, src: generatePlaceholderSVG("kay", 2) },
+      { zoom: 4, src: generatePlaceholderSVG("kay", 3) },
+      { zoom: 3, src: generatePlaceholderSVG("kay", 4) },
+      { zoom: 2, src: generatePlaceholderSVG("kay", 5) },
+      { zoom: 1, src: generatePlaceholderSVG("kay", 6) },
+    ]
+  },
+  {
+    id: "butler",
+    name: "Butler Pavilion",
+    aliases: ["butler pavilion", "butler", "sis building", "school of international service", "sis"],
+    description: "Home to the School of International Service.",
+    hint: "Where future diplomats and world-changers study.",
+    images: [
+      { zoom: 8, src: generatePlaceholderSVG("butler", 1) },
+      { zoom: 6, src: generatePlaceholderSVG("butler", 2) },
+      { zoom: 4, src: generatePlaceholderSVG("butler", 3) },
+      { zoom: 3, src: generatePlaceholderSVG("butler", 4) },
+      { zoom: 2, src: generatePlaceholderSVG("butler", 5) },
+      { zoom: 1, src: generatePlaceholderSVG("butler", 6) },
+    ]
+  },
+  {
+    id: "bender",
+    name: "Bender Library",
+    aliases: ["bender library", "bender", "library", "au library", "university library"],
+    description: "American University's main library and academic heart.",
+    hint: "The place to go when the deadline is tomorrow.",
+    images: [
+      { zoom: 8, src: generatePlaceholderSVG("bender", 1) },
+      { zoom: 6, src: generatePlaceholderSVG("bender", 2) },
+      { zoom: 4, src: generatePlaceholderSVG("bender", 3) },
+      { zoom: 3, src: generatePlaceholderSVG("bender", 4) },
+      { zoom: 2, src: generatePlaceholderSVG("bender", 5) },
+      { zoom: 1, src: generatePlaceholderSVG("bender", 6) },
+    ]
+  },
+  {
+    id: "anderson",
+    name: "Anderson Hall",
+    aliases: ["anderson hall", "anderson", "soc building", "school of communication"],
+    description: "Home to AU's School of Communication.",
+    hint: "Where the next great journalists and filmmakers learn their craft.",
+    images: [
+      { zoom: 8, src: generatePlaceholderSVG("anderson", 1) },
+      { zoom: 6, src: generatePlaceholderSVG("anderson", 2) },
+      { zoom: 4, src: generatePlaceholderSVG("anderson", 3) },
+      { zoom: 3, src: generatePlaceholderSVG("anderson", 4) },
+      { zoom: 2, src: generatePlaceholderSVG("anderson", 5) },
+      { zoom: 1, src: generatePlaceholderSVG("anderson", 6) },
+    ]
+  },
+];
+
+const ALL_LOCATIONS = [
+  "Kogod School of Business",
+  "Kay Spiritual Life Center",
+  "Butler Pavilion",
+  "Bender Library",
+  "Anderson Hall",
+  "Katzen Arts Center",
+  "Ward Circle Building",
+  "Letts Hall",
+  "Nebraska Hall",
+  "Leonard Hall",
+  "Hughes Hall",
+  "McDowell Hall",
+  "Cassell Hall",
+  "Centennial Hall",
+  "Clark Hall",
+  "The Greenberg Theatre",
+  "Sports Center",
+  "Reeves Field",
+  "Jacobs Fitness Center",
+  "East Campus Apartments",
+  "Tenley Campus",
+  "Kreeger Music Building",
+  "Watkins Art Gallery",
+  "Mary Graydon Center",
+  "Tavern Restaurant",
+  "The Eagle's Nest",
+  "Davenport Building",
+  "Hurst Hall",
+  "The Quad",
+  "Nebraska Avenue Gate",
+];
+
+// ─── PLACEHOLDER IMAGE GENERATOR ────────────────────────────────────────────
+// Creates colored SVG placeholders. Replace src values with real campus photos.
+function generatePlaceholderSVG(location, zoomLevel) {
+  const colorMap = {
+    kogod:    ["#c8102e", "#e8b84b"],
+    kay:      ["#2e5fa3", "#87c1f5"],
+    butler:   ["#1a6b3a", "#5ecf8e"],
+    bender:   ["#7b3f9e", "#c990f0"],
+    anderson: ["#b86a1e", "#f0b35e"],
+  };
+  const [c1, c2] = colorMap[location] || ["#444", "#888"];
+  const blur = Math.max(0, (zoomLevel - 1) * 2.5);
+  const zoomLabels = ["×8", "×6", "×4", "×3", "×2", "×1"];
+  const label = zoomLabels[zoomLevel - 1] || "×1";
+
+  // Build a simple visual with the zoom level and location name
+  const svgContent = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="700" height="394" viewBox="0 0 700 394">
+      <defs>
+        <linearGradient id="g${location}${zoomLevel}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${c1};stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:${c2};stop-opacity:1"/>
+        </linearGradient>
+        <filter id="blur${zoomLevel}">
+          <feGaussianBlur stdDeviation="${blur}"/>
+        </filter>
+      </defs>
+      <rect width="700" height="394" fill="url(#g${location}${zoomLevel})"/>
+      <rect width="700" height="394" fill="url(#g${location}${zoomLevel})" filter="url(#blur${zoomLevel})" opacity="0.7"/>
+      <!-- Grid lines to simulate zoomed photo detail -->
+      ${Array.from({length: 12}, (_, i) => `<line x1="${i*60}" y1="0" x2="${i*60}" y2="394" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
+      ${Array.from({length: 7}, (_, i) => `<line x1="0" y1="${i*60}" x2="700" y2="${i*60}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
+      <!-- Center indicator cross -->
+      <line x1="340" y1="180" x2="360" y2="180" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <line x1="350" y1="170" x2="350" y2="190" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <!-- Zoom label -->
+      <rect x="286" y="165" width="128" height="36" rx="18" fill="rgba(0,0,0,0.5)"/>
+      <text x="350" y="188" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" fill="rgba(255,255,255,0.85)" letter-spacing="2">${label} ZOOM</text>
+      <!-- Note about real photos -->
+      <text x="350" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="rgba(255,255,255,0.3)">Replace with real AU campus photo</text>
+    </svg>
+  `;
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgContent)));
+}
+
+// ─── GAME STATE ──────────────────────────────────────────────────────────────
+function getDayIndex() {
+  const epoch = new Date('2025-01-01').getTime();
+  const now = new Date().getTime();
+  return Math.floor((now - epoch) / 86400000) % LOCATIONS.length;
+}
+
+const STATE_KEY = 'clawedle_state';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function saveState(state) {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch {}
+}
+
+function loadStats() {
+  try {
+    const raw = localStorage.getItem('clawedle_stats');
+    return raw ? JSON.parse(raw) : { streak: 0, played: 0, wins: 0, lastWon: null };
+  } catch { return { streak: 0, played: 0, wins: 0, lastWon: null }; }
+}
+
+function saveStats(stats) {
+  try { localStorage.setItem('clawedle_stats', JSON.stringify(stats)); } catch {}
+}
+
+const todayIndex = getDayIndex();
+const puzzle = LOCATIONS[todayIndex];
+let state = loadState();
+const todayKey = new Date().toDateString();
+
+// Reset if new day
+if (!state || state.day !== todayKey) {
+  state = { day: todayKey, guesses: [], won: false, lost: false, guessCount: 0 };
+  saveState(state);
+}
+
+// ─── DOM REFS ────────────────────────────────────────────────────────────────
+const locationImg  = document.getElementById('locationImg');
+const zoomLabel    = document.getElementById('zoomLabel');
+const guessBadge   = document.getElementById('guessBadge');
+const guessDots    = document.getElementById('guessDots');
+const guessesList  = document.getElementById('guessesList');
+const guessInput   = document.getElementById('guessInput');
+const submitBtn    = document.getElementById('submitBtn');
+const suggestions  = document.getElementById('suggestions');
+const hintText     = document.getElementById('hintText');
+const inputArea    = document.getElementById('inputArea');
+const toast        = document.getElementById('toast');
+const streakNum    = document.getElementById('streakNum');
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  const stats = loadStats();
+  streakNum.textContent = stats.streak;
+
+  // Set hint
+  hintText.textContent = puzzle.hint;
+
+  // Render dots
+  renderDots();
+
+  // Render image for current guess
+  const guessNum = state.guesses.length;
+  setImage(guessNum);
+
+  // Replay previous guesses
+  state.guesses.forEach((g, i) => addGuessRow(g.text, g.result, i + 1));
+
+  // If game is over
+  if (state.won || state.lost) {
+    inputArea.style.display = 'none';
+    setTimeout(() => showResult(state.won), 600);
+  }
+
+  // Show help on first visit
+  const visited = localStorage.getItem('clawedle_visited');
+  if (!visited) {
+    document.getElementById('helpModal').classList.add('show');
+    localStorage.setItem('clawedle_visited', '1');
+  }
+}
+
+function setImage(guessNum) {
+  const imgIndex = Math.min(guessNum, 5);
+  const imgData = puzzle.images[imgIndex];
+  locationImg.src = imgData.src;
+  zoomLabel.textContent = `🔍 ×${imgData.zoom} ZOOM`;
+  guessBadge.textContent = state.won || state.lost
+    ? (state.won ? '✓ SOLVED' : '✗ REVEALED')
+    : `GUESS ${guessNum + 1} OF 6`;
+}
+
+function renderDots() {
+  guessDots.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'guess-dot';
+    if (i < state.guesses.length) dot.classList.add('used');
+    else if (i === state.guesses.length && !state.won && !state.lost) dot.classList.add('current');
+    guessDots.appendChild(dot);
+  }
+}
+
+function addGuessRow(text, result, num) {
+  const row = document.createElement('div');
+  row.className = 'guess-row';
+  const tagClass = result === 'correct' ? 'tag-correct' : result === 'close' ? 'tag-close' : 'tag-wrong';
+  const tagText  = result === 'correct' ? '✓ CORRECT' : result === 'close' ? '~ CLOSE' : '✗ WRONG';
+  row.innerHTML = `
+    <span class="guess-num">${num}</span>
+    <span class="guess-text">${text}</span>
+    <span class="guess-tag ${tagClass}">${tagText}</span>
+  `;
+  guessesList.appendChild(row);
+}
+
+// ─── GUESSING LOGIC ──────────────────────────────────────────────────────────
+function evaluateGuess(input) {
+  const normalized = input.trim().toLowerCase();
+  const correctAliases = puzzle.aliases.map(a => a.toLowerCase());
+
+  if (correctAliases.includes(normalized) || normalized === puzzle.name.toLowerCase()) {
+    return 'correct';
+  }
+
+  // "Close" = same building complex, partial name match
+  const partialMatch = correctAliases.some(alias =>
+    alias.includes(normalized) || normalized.includes(alias.split(' ')[0])
+  );
+  if (partialMatch && normalized.length >= 3) return 'close';
+
+  return 'wrong';
+}
+
+function submitGuess() {
+  const input = guessInput.value.trim();
+  if (!input) return;
+
+  // Validate it's a known location (or close enough)
+  const isKnown = ALL_LOCATIONS.some(loc => loc.toLowerCase().includes(input.toLowerCase()) || input.toLowerCase().includes(loc.toLowerCase().split(' ')[0]));
+
+  if (!isKnown && input.length > 2) {
+    showToast("Type a location on AU's campus");
+    return;
+  }
+
+  const result = evaluateGuess(input);
+  const guessNum = state.guesses.length + 1;
+
+  state.guesses.push({ text: input, result });
+  addGuessRow(input, result, guessNum);
+
+  guessInput.value = '';
+  suggestions.classList.remove('visible');
+
+  if (result === 'correct') {
+    state.won = true;
+    setImage(guessNum - 1); // Show current (fully revealed) image
+    renderDots();
+    saveState(state);
+    updateStats(true, guessNum);
+    inputArea.style.display = 'none';
+    showToast(guessNum === 1 ? "INCREDIBLE! 🦅" : "Nicely done, Eagle!");
+    setTimeout(() => showResult(true), 1200);
+  } else if (guessNum >= 6) {
+    state.lost = true;
+    setImage(5); // Fully zoomed out
+    renderDots();
+    saveState(state);
+    updateStats(false, 6);
+    inputArea.style.display = 'none';
+    showToast("Better luck tomorrow!");
+    setTimeout(() => showResult(false), 1200);
+  } else {
+    setImage(guessNum); // Zoom out one level
+    renderDots();
+    saveState(state);
+    if (result === 'close') showToast("You're in the right area…");
+  }
+}
+
+function updateStats(won, guesses) {
+  const stats = loadStats();
+  stats.played++;
+  if (won) {
+    stats.wins++;
+    stats.streak = (stats.lastWon === getPrevDay()) ? stats.streak + 1 : 1;
+    stats.lastWon = todayKey;
+  } else {
+    stats.streak = 0;
+  }
+  saveStats(stats);
+  streakNum.textContent = stats.streak;
+}
+
+function getPrevDay() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toDateString();
+}
+
+// ─── RESULT SCREEN ───────────────────────────────────────────────────────────
+function showResult(won) {
+  const stats = loadStats();
+  document.getElementById('resultEmoji').textContent = won ? (state.guesses.length === 1 ? '🦅' : '🎉') : '😔';
+  const titleEl = document.getElementById('resultTitle');
+  titleEl.textContent = won ? (state.guesses.length === 1 ? 'Eagle Eye!' : 'You Got It!') : 'Better Tomorrow!';
+  titleEl.className = 'result-title ' + (won ? 'win' : 'lose');
+  document.getElementById('resultLocation').textContent = puzzle.name;
+  document.getElementById('resultDesc').textContent = puzzle.description;
+  document.getElementById('statStreak').textContent = stats.streak;
+  document.getElementById('statGuesses').textContent = won ? state.guesses.length : '✗';
+  document.getElementById('statPlayed').textContent = stats.played;
+  document.getElementById('resultOverlay').classList.add('show');
+  startCountdown();
+}
+
+function buildShareText() {
+  const emojiMap = { correct: '🟩', close: '🟨', wrong: '⬛' };
+  const lines = state.guesses.map(g => emojiMap[g.result]).join('');
+  const won = state.won;
+  return `Clawedle – ${new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'})}\n` +
+    `${won ? state.guesses.length : 'X'}/6 🦅\n\n${lines}\n\nhttps://clawedle.com`;
+}
+
+document.getElementById('shareBtn').addEventListener('click', () => {
+  const text = buildShareText();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+  } else {
+    showToast('Copied!');
+  }
+});
+
+function startCountdown() {
+  function update() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const diff = midnight - now;
+    const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+    const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+    const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+    document.getElementById('countdown').textContent = `${h}:${m}:${s}`;
+  }
+  update();
+  setInterval(update, 1000);
+}
+
+// ─── AUTOCOMPLETE ────────────────────────────────────────────────────────────
+guessInput.addEventListener('input', () => {
+  const val = guessInput.value.trim().toLowerCase();
+  if (!val || val.length < 2) { suggestions.classList.remove('visible'); return; }
+
+  const matches = ALL_LOCATIONS.filter(loc => loc.toLowerCase().includes(val)).slice(0, 6);
+  if (!matches.length) { suggestions.classList.remove('visible'); return; }
+
+  suggestions.innerHTML = matches.map(m =>
+    `<div class="suggestion-item" data-val="${m}">${m}</div>`
+  ).join('');
+  suggestions.classList.add('visible');
+});
+
+suggestions.addEventListener('click', e => {
+  const item = e.target.closest('.suggestion-item');
+  if (!item) return;
+  guessInput.value = item.dataset.val;
+  suggestions.classList.remove('visible');
+  guessInput.focus();
+});
+
+guessInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitGuess();
+  if (e.key === 'Escape') suggestions.classList.remove('visible');
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.input-area')) suggestions.classList.remove('visible');
+});
+
+submitBtn.addEventListener('click', submitGuess);
+
+// ─── MODALS & TOASTS ─────────────────────────────────────────────────────────
+document.getElementById('helpBtn').addEventListener('click', () => {
+  document.getElementById('helpModal').classList.add('show');
+});
+document.getElementById('closeHelp').addEventListener('click', () => {
+  document.getElementById('helpModal').classList.remove('show');
+});
+document.getElementById('helpModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('helpModal'))
+    document.getElementById('helpModal').classList.remove('show');
+});
+
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ─── KICK OFF ────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
