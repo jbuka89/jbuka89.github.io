@@ -932,6 +932,8 @@ function setImage(guessNum) {
   const imgIndex = Math.min(guessNum, 5);
   const imgData = puzzle.images[imgIndex];
   locationImg.src = imgData.src;
+  const zoomScales = [2.5, 2.0, 1.6, 1.3, 1.1, 1.0];
+  locationImg.style.transform = `scale(${zoomScales[imgIndex]})`;
   zoomLabel.textContent = `🔍 ×${imgData.zoom} ZOOM`;
   guessBadge.textContent = state.won || state.lost
     ? (state.won ? '✓ SOLVED' : '✗ REVEALED')
