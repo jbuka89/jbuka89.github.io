@@ -133,7 +133,9 @@
     transition: all 0.3s;
   }
   .guess-dot.used { background: var(--au-red); }
+  .guess-dot.close { background: var(--close); }
   .guess-dot.current { background: var(--au-blue); box-shadow: 0 0 8px var(--au-blue); }
+
 
   /* IMAGE VIEWER */
   .image-container {
@@ -614,6 +616,7 @@
 
 <footer>
   A daily puzzle for anyone wasting their money at <a href="https://american.edu" target="_blank">American University</a>  · Shoutout John Alger
+    <br> <a href="https://forms.gle/cBePpaXwhD5zZYRr9" target="_blank">Submit a Photo for Clawedle</a>
 </footer>
 
 <!-- RESULT OVERLAY -->
@@ -671,7 +674,7 @@
       </div>
     </div>
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--correct)"></div> Correct — you nailed it!</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--correct)"></div> Correct — you got it!</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--close)"></div> Close — same building or adjacent</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--wrong)"></div> Wrong — try again</div>
     </div>
@@ -687,7 +690,8 @@ const LOCATIONS = [
   {
     id: "bender",
     name: "Bender Library",
-    aliases: ["bender library", "library", "au library", "university library"],
+    aliases: ["School of", "library", "au library", "university library"],
+    close: ["Hall of Science", "McKinley Building", "Clark Hall"],
     description: "Are you really an eagle if you haven't spent an entire night here?",
     images: [
       { zoom: 8, src: "library.jpg" },
@@ -698,90 +702,75 @@ const LOCATIONS = [
       { zoom: 1, src: "library.jpg" },
     ]
   },
-
+  {
+    id: "Don Myers Technology and Innovation Building",
+    name: "DMTI",
+    aliases: ["dmti", "Don Myers Technology and Innovation Building", "Tech Building", "DMTI"],
+    close: ["Hall of Science"],
+    description: "The nerd building",
+    images: [
+      { zoom: 8, src: "dmti.jpg" },
+      { zoom: 6, src: "dmti.jpg" },
+      { zoom: 4, src: "dmti.jpg" },
+      { zoom: 3, src: "dmti.jpg" },
+      { zoom: 2, src: "dmti.jpg" },
+      { zoom: 1, src: "dmti.jpg" },
+    ]
+  }
 ];
 
 const ALL_LOCATIONS = [
-  "Kogod School of Business",
-  "Kay Spiritual Life Center",
-  "Butler Pavilion",
-  "Bender Library",
   "Anderson Hall",
-  "Katzen Arts Center",
-  "Ward Circle Building",
-  "Letts Hall",
-  "Nebraska Hall",
-  "Leonard Hall",
-  "Hughes Hall",
-  "McDowell Hall",
+  "Asbury Building",
+  "Batelle-Tompkins",
+  "Bender Arena",
+  "Bender Library",
+  "Butler Pavilion",
   "Cassell Hall",
+  "Cassell Gym",
   "Centennial Hall",
   "Clark Hall",
-  "The Greenberg Theatre",
-  "Sports Center",
-  "Reeves Field",
-  "Jacobs Fitness Center",
-  "East Campus Apartments",
-  "Tenley Campus",
-  "Kreeger Music Building",
-  "Watkins Art Gallery",
-  "Mary Graydon Center",
-  "The Tavern",
-  "The Eagle's Nest",
+  "Consitution Hall",
   "The Dav",
+  "Don Myers Technology and Innovation Building",
+  "Duber Hall",
+  "The Eagle's Nest",
+  "East Quad Building",
+  "Federal Hall",
+  "Gray Hall",
+  "The Greenberg Theatre",
+  "Hall of Science",
+  "Hamilton Building",
+  "Hughes Hall",
   "Hurst Hall",
-  "The Quad",
+  "Jack Child Hall",
+  "Jacobs Fitness Center",
+  "Katzen Arts Center",
+  "Kerwin Hall",
+  "Kay Spiritual Life Center",
+  "Kogod School of Business",
+  "Kreeger Music Building",
+  "Leonard Hall",
+  "Letts Hall",
+  "Mary Graydon Center",
+  "McDowell Hall",
+  "McKinley Building",
   "Nebraska Avenue Gate",
+  "Nebraska Hall",
+  "QDOBA",
+  "The Quad",
+  "Reeves Field",
+  "School of International Service",
+  "Sports Center",
+  "Subway",
+  "The Tavern",
+  "Ward Circle Building",
+  "Watkins Art Gallery",
 ];
-
-// ─── PLACEHOLDER IMAGE GENERATOR ────────────────────────────────────────────
-// Creates colored SVG placeholders. Replace src values with real campus photos.
-function generatePlaceholderSVG(location, zoomLevel) {
-  const colorMap = {
-    kogod:    ["#c8102e", "#e8b84b"],
-    kay:      ["#2e5fa3", "#87c1f5"],
-    butler:   ["#1a6b3a", "#5ecf8e"],
-    bender:   ["#7b3f9e", "#c990f0"],
-    anderson: ["#b86a1e", "#f0b35e"],
-  };
-  const [c1, c2] = colorMap[location] || ["#444", "#888"];
-  const blur = Math.max(0, (zoomLevel - 1) * 2.5);
-  const zoomLabels = ["×8", "×6", "×4", "×3", "×2", "×1"];
-  const label = zoomLabels[zoomLevel - 1] || "×1";
-
-  // Build a simple visual with the zoom level and location name
-  const svgContent = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="700" height="394" viewBox="0 0 700 394">
-      <defs>
-        <linearGradient id="g${location}${zoomLevel}" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:${c1};stop-opacity:1"/>
-          <stop offset="100%" style="stop-color:${c2};stop-opacity:1"/>
-        </linearGradient>
-        <filter id="blur${zoomLevel}">
-          <feGaussianBlur stdDeviation="${blur}"/>
-        </filter>
-      </defs>
-      <rect width="700" height="394" fill="url(#g${location}${zoomLevel})"/>
-      <rect width="700" height="394" fill="url(#g${location}${zoomLevel})" filter="url(#blur${zoomLevel})" opacity="0.7"/>
-      <!-- Grid lines to simulate zoomed photo detail -->
-      ${Array.from({length: 12}, (_, i) => `<line x1="${i*60}" y1="0" x2="${i*60}" y2="394" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
-      ${Array.from({length: 7}, (_, i) => `<line x1="0" y1="${i*60}" x2="700" y2="${i*60}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
-      <!-- Center indicator cross -->
-      <line x1="340" y1="180" x2="360" y2="180" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-      <line x1="350" y1="170" x2="350" y2="190" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-      <!-- Zoom label -->
-      <rect x="286" y="165" width="128" height="36" rx="18" fill="rgba(0,0,0,0.5)"/>
-      <text x="350" y="188" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" fill="rgba(255,255,255,0.85)" letter-spacing="2">${label} ZOOM</text>
-      <!-- Note about real photos -->
-      <text x="350" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="rgba(255,255,255,0.3)">Replace with real AU campus photo</text>
-    </svg>
-  `;
-  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgContent)));
-}
 
 // ─── GAME STATE ──────────────────────────────────────────────────────────────
 function getDayIndex() {
-  const epoch = new Date('2025-01-01').getTime();
+  const epoch = new Date('2026-03-26').getTime();
   const now = new Date().getTime();
   return Math.floor((now - epoch) / 86400000) % LOCATIONS.length;
 }
@@ -878,11 +867,26 @@ function setImage(guessNum) {
 
 function renderDots() {
   guessDots.innerHTML = '';
+
   for (let i = 0; i < 6; i++) {
     const dot = document.createElement('div');
     dot.className = 'guess-dot';
-    if (i < state.guesses.length) dot.classList.add('used');
-    else if (i === state.guesses.length && !state.won && !state.lost) dot.classList.add('current');
+
+    if (i < state.guesses.length) {
+      const result = state.guesses[i].result;
+
+      if (result === 'correct') {
+        dot.classList.add('used'); // keep green or change if you want
+      } else if (result === 'close') {
+        dot.classList.add('close'); // ← THIS is what you want
+      } else {
+        dot.classList.add('used'); // wrong = red (current behavior)
+      }
+
+    } else if (i === state.guesses.length && !state.won && !state.lost) {
+      dot.classList.add('current');
+    }
+
     guessDots.appendChild(dot);
   }
 }
@@ -904,6 +908,7 @@ function addGuessRow(text, result, num) {
 function evaluateGuess(input) {
   const normalized = input.trim().toLowerCase();
   const correctAliases = puzzle.aliases.map(a => a.toLowerCase());
+  const normalizedClose = puzzle.close.map(b => b.toLowerCase());
 
   if (correctAliases.includes(normalized) || normalized === puzzle.name.toLowerCase()) {
     return 'correct';
@@ -914,6 +919,7 @@ function evaluateGuess(input) {
     alias.includes(normalized) || normalized.includes(alias.split(' ')[0])
   );
   if (partialMatch && normalized.length >= 3) return 'close';
+  if (normalizedClose.includes(normalized)) return 'close';
 
   return 'wrong';
 }
@@ -941,7 +947,7 @@ function submitGuess() {
 
   if (result === 'correct') {
     state.won = true;
-    setImage(guessNum - 1); // Show current (fully revealed) image
+    setImage(5); // Show current (fully revealed) image
     renderDots();
     saveState(state);
     updateStats(true, guessNum);
@@ -1052,11 +1058,20 @@ suggestions.addEventListener('click', e => {
   if (!item) return;
   guessInput.value = item.dataset.val;
   suggestions.classList.remove('visible');
-  guessInput.focus();
+  submitGuess();
 });
 
 guessInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitGuess();
+  if (e.key === 'Enter') {
+      const firstSuggestion = suggestions.querySelector('.suggestion-item');
+    if (suggestions.classList.contains('visible') && firstSuggestion) {
+      guessInput.value = firstSuggestion.dataset.val;
+      suggestions.classList.remove('visible');
+      submitGuess();
+    } else {
+      submitGuess();
+    }
+  }
   if (e.key === 'Escape') suggestions.classList.remove('visible');
 });
 
@@ -1096,9 +1111,6 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 
   // Clear game state
   localStorage.removeItem('clawedle_state');
-
-  // OPTIONAL: also reset stats
-  localStorage.removeItem('clawedle_stats');
 
   // Reload page
   location.reload();
