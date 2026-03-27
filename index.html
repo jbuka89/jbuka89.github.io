@@ -912,8 +912,14 @@ function init() {
   renderDots();
 
   // Render image for current guess
-  const guessNum = state.guesses.length;
+const guessNum = state.guesses.length;
+
+// If finished, always show fully zoomed-out image
+if (state.won || state.lost) {
+  setImage(5);
+} else {
   setImage(guessNum);
+}
 
   // Replay previous guesses
   state.guesses.forEach((g, i) => addGuessRow(g.text, g.result, i + 1));
