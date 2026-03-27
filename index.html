@@ -26,6 +26,8 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+
+
   body {
     background: var(--bg);
     color: var(--text);
@@ -46,6 +48,18 @@
     justify-content: space-between;
     border-bottom: 1px solid var(--border);
   }
+
+.light-mode {
+  --bg: #ffffff;
+  --surface: #f5f5f5;
+  --surface2: #eaeaea;
+  --border: #d0d0d0;
+
+  --text: #1a1a1a;
+  --text-muted: #666;
+
+  --wrong: #e0e0e0;
+}
 
   .logo {
     display: flex;
@@ -579,6 +593,7 @@
   <!-- <button class="icon-btn" id="resetBtn" title="Reset game">⟲</button>-->
     <div class="streak-badge">🔥 <span id="streakNum">0</span></div>
     <button class="icon-btn" id="helpBtn" title="How to play">?</button>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme">🌙</button>
   </div>
 </header>
 
@@ -1123,6 +1138,27 @@ suggestions.addEventListener('click', e => {
   guessInput.value = item.dataset.val;
   suggestions.classList.remove('visible');
   submitGuess();
+});
+
+const themeToggle = document.getElementById('themeToggle');
+
+// Load saved theme
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-mode');
+  themeToggle.textContent = '☀️';
+}
+
+// Toggle on click
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('light-mode');
+
+  const isLight = document.body.classList.contains('light-mode');
+
+  // Save preference
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+
+  // Change icon
+  themeToggle.textContent = isLight ? '☀️' : '🌙';
 });
 
 guessInput.addEventListener('keydown', e => {
