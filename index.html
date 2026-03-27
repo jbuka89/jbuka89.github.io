@@ -135,6 +135,7 @@
   }
   .guess-dot.used { background: var(--au-red); }
   .guess-dot.close { background: var(--close); }
+  .guess-dot.correct { background: var(--correct); }
   .guess-dot.current { background: var(--au-blue); box-shadow: 0 0 8px var(--au-blue); }
 
 
@@ -877,7 +878,7 @@ function renderDots() {
       const result = state.guesses[i].result;
 
       if (result === 'correct') {
-        dot.classList.add('used'); // keep green or change if you want
+        dot.classList.add('correct'); // keep green or change if you want
       } else if (result === 'close') {
         dot.classList.add('close'); // ← THIS is what you want
       } else {
