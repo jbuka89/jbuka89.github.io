@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clawedle — Guess the AU Spot</title>
+<title>Clawedle</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
+:root {
     --bg: #1a1a1a;
     --surface: #242424;
     --surface2: #2e2e2e;
     --border: #3a3a3a;
     --text: #f0ede6;
     --text-muted: #888;
-    --au-red: #c8102e;
-    --au-gold: #e8b84b;
+    --au-red: #ed1a3b;
+    --au-blue: #004fa2;
     --correct: #538d4e;
     --close: #b59f3b;
     --wrong: #3a3a3a;
@@ -57,7 +57,7 @@
     font-size: 28px;
     letter-spacing: 4px;
     text-transform: uppercase;
-    background: linear-gradient(135deg, var(--au-red), var(--au-gold));
+    background: linear-gradient(135deg, var(--au-red), var(--au-blue));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -101,7 +101,7 @@
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
-    color: var(--au-gold);
+    color: var(--au-blue);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -133,7 +133,9 @@
     transition: all 0.3s;
   }
   .guess-dot.used { background: var(--au-red); }
-  .guess-dot.current { background: var(--au-gold); box-shadow: 0 0 8px var(--au-gold); }
+  .guess-dot.close { background: var(--close); }
+  .guess-dot.current { background: var(--au-blue); box-shadow: 0 0 8px var(--au-blue); }
+
 
   /* IMAGE VIEWER */
   .image-container {
@@ -172,7 +174,7 @@
     position: absolute;
     top: 12px;
     left: 12px;
-    background: rgba(200, 16, 46, 0.85);
+    background: rgba(237, 26, 59, 0.9);
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 11px;
@@ -191,21 +193,6 @@
     border-radius: 10px;
   }
 
-  /* HINT BAR */
-  .hint-bar {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 16px;
-    font-size: 12px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .hint-bar span { color: var(--au-gold); font-weight: 600; }
 
   /* PREVIOUS GUESSES */
   .guesses-list {
@@ -300,8 +287,7 @@
     transition: all 0.15s;
     white-space: nowrap;
   }
-  .submit-btn:hover { background: #a50d25; transform: translateY(-1px); }
-  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:hover { background: #c01530; transform: translateY(-1px); }  .submit-btn:active { transform: translateY(0); }
   .submit-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; }
 
   /* SUGGESTIONS DROPDOWN */
@@ -353,6 +339,7 @@
     max-width: 420px;
     text-align: center;
     animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
   }
 
   @keyframes popIn {
@@ -374,7 +361,7 @@
   .result-location {
     font-size: 16px;
     font-weight: 700;
-    color: var(--au-gold);
+    color: var(--au-blue);
     margin-bottom: 6px;
   }
   .result-desc {
@@ -416,6 +403,8 @@
   }
   .result-share-btn:hover { filter: brightness(1.1); }
 
+
+
   .next-puzzle {
     font-size: 12px;
     color: var(--text-muted);
@@ -448,6 +437,23 @@
     max-width: 400px;
     animation: popIn 0.3s ease;
   }
+
+.result-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.15s;
+}
+
+.result-close:hover {
+  color: var(--text);
+}
 
   .modal-header {
     display: flex;
@@ -520,8 +526,8 @@
     top: 80px;
     left: 50%;
     transform: translateX(-50%) translateY(-20px);
-    background: var(--text);
-    color: var(--bg);
+    background: #004FA2;
+    color: #ffffff;
     padding: 10px 20px;
     border-radius: 24px;
     font-size: 13px;
@@ -568,6 +574,7 @@
     <div class="logo-subtitle">American University · Daily</div>
   </div>
   <div class="header-actions">
+  <button class="icon-btn" id="resetBtn" title="Reset game">⟲</button>
     <div class="streak-badge">🔥 <span id="streakNum">0</span></div>
     <button class="icon-btn" id="helpBtn" title="How to play">?</button>
   </div>
@@ -586,10 +593,6 @@
     <div class="guess-number-badge" id="guessBadge">GUESS 1 OF 6</div>
   </div>
 
-  <!-- Hint bar -->
-  <div class="hint-bar">
-    💡 Hint: <span id="hintText">A place where Eagles gather on campus.</span>
-  </div>
 
   <!-- Previous guesses -->
   <div class="guesses-list" id="guessesList"></div>
@@ -612,12 +615,14 @@
 </main>
 
 <footer>
-  A daily campus puzzle for <a href="https://american.edu" target="_blank">American University</a> Eagles · Not affiliated with AU
+  A daily puzzle for anyone wasting their money at <a href="https://american.edu" target="_blank">American University</a>  · Shoutout John Alger
+    <br> <a href="https://forms.gle/cBePpaXwhD5zZYRr9" target="_blank">Submit a Photo for Clawedle</a>
 </footer>
 
 <!-- RESULT OVERLAY -->
 <div class="result-overlay" id="resultOverlay">
   <div class="result-card">
+  <button class="result-close" id="closeResult">✕</button>
     <div class="result-emoji" id="resultEmoji">🎉</div>
     <div class="result-title" id="resultTitle">Eagle Eye!</div>
     <div class="result-location" id="resultLocation"></div>
@@ -669,8 +674,8 @@
       </div>
     </div>
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--correct)"></div> Correct — you nailed it!</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--close)"></div> Close — same area or building complex</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--correct)"></div> Correct — you got it!</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--close)"></div> Close — same building or adjacent</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--wrong)"></div> Wrong — try again</div>
     </div>
   </div>
@@ -678,170 +683,94 @@
 
 <script>
 // ─── PUZZLE DATA ────────────────────────────────────────────────────────────
-// Each puzzle has a real AU location. Images use Google Street View Static API
-// format (URL-based) or can be replaced with actual campus photos.
-// The zoom levels simulate progressively zoomed-out views.
+
 
 const LOCATIONS = [
-  {
-    id: "kogod",
-    name: "Kogod School of Business",
-    aliases: ["kogod", "kogod school of business", "kogod business", "kogod school"],
-    description: "Home to AU's business school, featuring its iconic courtyard.",
-    hint: "Where Eagles sharpen their business acumen.",
-    // Using placeholder gradient images for demo; replace with real AU photos
-    images: [
-      { zoom: 8, src: generatePlaceholderSVG("kogod", 1) },
-      { zoom: 6, src: generatePlaceholderSVG("kogod", 2) },
-      { zoom: 4, src: generatePlaceholderSVG("kogod", 3) },
-      { zoom: 3, src: generatePlaceholderSVG("kogod", 4) },
-      { zoom: 2, src: generatePlaceholderSVG("kogod", 5) },
-      { zoom: 1, src: generatePlaceholderSVG("kogod", 6) },
-    ]
-  },
-  {
-    id: "kas",
-    name: "Kay Spiritual Life Center",
-    aliases: ["kay spiritual life center", "kay chapel", "kay spiritual", "kay center", "chapel"],
-    description: "AU's iconic nondenominational spiritual center on the quad.",
-    hint: "A place of reflection at the heart of campus.",
-    images: [
-      { zoom: 8, src: generatePlaceholderSVG("kay", 1) },
-      { zoom: 6, src: generatePlaceholderSVG("kay", 2) },
-      { zoom: 4, src: generatePlaceholderSVG("kay", 3) },
-      { zoom: 3, src: generatePlaceholderSVG("kay", 4) },
-      { zoom: 2, src: generatePlaceholderSVG("kay", 5) },
-      { zoom: 1, src: generatePlaceholderSVG("kay", 6) },
-    ]
-  },
-  {
-    id: "butler",
-    name: "Butler Pavilion",
-    aliases: ["butler pavilion", "butler", "sis building", "school of international service", "sis"],
-    description: "Home to the School of International Service.",
-    hint: "Where future diplomats and world-changers study.",
-    images: [
-      { zoom: 8, src: generatePlaceholderSVG("butler", 1) },
-      { zoom: 6, src: generatePlaceholderSVG("butler", 2) },
-      { zoom: 4, src: generatePlaceholderSVG("butler", 3) },
-      { zoom: 3, src: generatePlaceholderSVG("butler", 4) },
-      { zoom: 2, src: generatePlaceholderSVG("butler", 5) },
-      { zoom: 1, src: generatePlaceholderSVG("butler", 6) },
-    ]
-  },
+
   {
     id: "bender",
     name: "Bender Library",
-    aliases: ["bender library", "bender", "library", "au library", "university library"],
-    description: "American University's main library and academic heart.",
-    hint: "The place to go when the deadline is tomorrow.",
+    aliases: ["School of", "library", "au library", "university library"],
+    close: ["Hall of Science", "McKinley Building", "Clark Hall"],
+    description: "Are you really an eagle if you haven't spent an entire night here?",
     images: [
-      { zoom: 8, src: generatePlaceholderSVG("bender", 1) },
-      { zoom: 6, src: generatePlaceholderSVG("bender", 2) },
-      { zoom: 4, src: generatePlaceholderSVG("bender", 3) },
-      { zoom: 3, src: generatePlaceholderSVG("bender", 4) },
-      { zoom: 2, src: generatePlaceholderSVG("bender", 5) },
-      { zoom: 1, src: generatePlaceholderSVG("bender", 6) },
+      { zoom: 8, src: "library.jpg" },
+      { zoom: 6, src: "library.jpg" },
+      { zoom: 4, src: "library.jpg" },
+      { zoom: 3, src: "library.jpg" },
+      { zoom: 2, src: "library.jpg" },
+      { zoom: 1, src: "library.jpg" },
     ]
   },
   {
-    id: "anderson",
-    name: "Anderson Hall",
-    aliases: ["anderson hall", "anderson", "soc building", "school of communication"],
-    description: "Home to AU's School of Communication.",
-    hint: "Where the next great journalists and filmmakers learn their craft.",
+    id: "Don Myers Technology and Innovation Building",
+    name: "DMTI",
+    aliases: ["dmti", "Don Myers Technology and Innovation Building", "Tech Building", "DMTI"],
+    close: ["Hall of Science"],
+    description: "The nerd building",
     images: [
-      { zoom: 8, src: generatePlaceholderSVG("anderson", 1) },
-      { zoom: 6, src: generatePlaceholderSVG("anderson", 2) },
-      { zoom: 4, src: generatePlaceholderSVG("anderson", 3) },
-      { zoom: 3, src: generatePlaceholderSVG("anderson", 4) },
-      { zoom: 2, src: generatePlaceholderSVG("anderson", 5) },
-      { zoom: 1, src: generatePlaceholderSVG("anderson", 6) },
+      { zoom: 8, src: "dmti.jpg" },
+      { zoom: 6, src: "dmti.jpg" },
+      { zoom: 4, src: "dmti.jpg" },
+      { zoom: 3, src: "dmti.jpg" },
+      { zoom: 2, src: "dmti.jpg" },
+      { zoom: 1, src: "dmti.jpg" },
     ]
-  },
+  }
 ];
 
 const ALL_LOCATIONS = [
-  "Kogod School of Business",
-  "Kay Spiritual Life Center",
-  "Butler Pavilion",
-  "Bender Library",
   "Anderson Hall",
-  "Katzen Arts Center",
-  "Ward Circle Building",
-  "Letts Hall",
-  "Nebraska Hall",
-  "Leonard Hall",
-  "Hughes Hall",
-  "McDowell Hall",
+  "Asbury Building",
+  "Batelle-Tompkins",
+  "Bender Arena",
+  "Bender Library",
+  "Butler Pavilion",
   "Cassell Hall",
+  "Cassell Gym",
   "Centennial Hall",
   "Clark Hall",
-  "The Greenberg Theatre",
-  "Sports Center",
-  "Reeves Field",
-  "Jacobs Fitness Center",
-  "East Campus Apartments",
-  "Tenley Campus",
-  "Kreeger Music Building",
-  "Watkins Art Gallery",
-  "Mary Graydon Center",
-  "Tavern Restaurant",
+  "Consitution Hall",
+  "The Dav",
+  "Don Myers Technology and Innovation Building",
+  "Duber Hall",
   "The Eagle's Nest",
-  "Davenport Building",
+  "East Quad Building",
+  "Federal Hall",
+  "Gray Hall",
+  "The Greenberg Theatre",
+  "Hall of Science",
+  "Hamilton Building",
+  "Hughes Hall",
   "Hurst Hall",
-  "The Quad",
+  "Jack Child Hall",
+  "Jacobs Fitness Center",
+  "Katzen Arts Center",
+  "Kerwin Hall",
+  "Kay Spiritual Life Center",
+  "Kogod School of Business",
+  "Kreeger Music Building",
+  "Leonard Hall",
+  "Letts Hall",
+  "Mary Graydon Center",
+  "McDowell Hall",
+  "McKinley Building",
   "Nebraska Avenue Gate",
+  "Nebraska Hall",
+  "QDOBA",
+  "The Quad",
+  "Reeves Field",
+  "School of International Service",
+  "Sports Center",
+  "Subway",
+  "The Tavern",
+  "Ward Circle Building",
+  "Watkins Art Gallery",
 ];
-
-// ─── PLACEHOLDER IMAGE GENERATOR ────────────────────────────────────────────
-// Creates colored SVG placeholders. Replace src values with real campus photos.
-function generatePlaceholderSVG(location, zoomLevel) {
-  const colorMap = {
-    kogod:    ["#c8102e", "#e8b84b"],
-    kay:      ["#2e5fa3", "#87c1f5"],
-    butler:   ["#1a6b3a", "#5ecf8e"],
-    bender:   ["#7b3f9e", "#c990f0"],
-    anderson: ["#b86a1e", "#f0b35e"],
-  };
-  const [c1, c2] = colorMap[location] || ["#444", "#888"];
-  const blur = Math.max(0, (zoomLevel - 1) * 2.5);
-  const zoomLabels = ["×8", "×6", "×4", "×3", "×2", "×1"];
-  const label = zoomLabels[zoomLevel - 1] || "×1";
-
-  // Build a simple visual with the zoom level and location name
-  const svgContent = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="700" height="394" viewBox="0 0 700 394">
-      <defs>
-        <linearGradient id="g${location}${zoomLevel}" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:${c1};stop-opacity:1"/>
-          <stop offset="100%" style="stop-color:${c2};stop-opacity:1"/>
-        </linearGradient>
-        <filter id="blur${zoomLevel}">
-          <feGaussianBlur stdDeviation="${blur}"/>
-        </filter>
-      </defs>
-      <rect width="700" height="394" fill="url(#g${location}${zoomLevel})"/>
-      <rect width="700" height="394" fill="url(#g${location}${zoomLevel})" filter="url(#blur${zoomLevel})" opacity="0.7"/>
-      <!-- Grid lines to simulate zoomed photo detail -->
-      ${Array.from({length: 12}, (_, i) => `<line x1="${i*60}" y1="0" x2="${i*60}" y2="394" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
-      ${Array.from({length: 7}, (_, i) => `<line x1="0" y1="${i*60}" x2="700" y2="${i*60}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
-      <!-- Center indicator cross -->
-      <line x1="340" y1="180" x2="360" y2="180" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-      <line x1="350" y1="170" x2="350" y2="190" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-      <!-- Zoom label -->
-      <rect x="286" y="165" width="128" height="36" rx="18" fill="rgba(0,0,0,0.5)"/>
-      <text x="350" y="188" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" fill="rgba(255,255,255,0.85)" letter-spacing="2">${label} ZOOM</text>
-      <!-- Note about real photos -->
-      <text x="350" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="rgba(255,255,255,0.3)">Replace with real AU campus photo</text>
-    </svg>
-  `;
-  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgContent)));
-}
 
 // ─── GAME STATE ──────────────────────────────────────────────────────────────
 function getDayIndex() {
-  const epoch = new Date('2025-01-01').getTime();
+  const epoch = new Date('2026-03-26').getTime();
   const now = new Date().getTime();
   return Math.floor((now - epoch) / 86400000) % LOCATIONS.length;
 }
@@ -891,7 +820,6 @@ const guessesList  = document.getElementById('guessesList');
 const guessInput   = document.getElementById('guessInput');
 const submitBtn    = document.getElementById('submitBtn');
 const suggestions  = document.getElementById('suggestions');
-const hintText     = document.getElementById('hintText');
 const inputArea    = document.getElementById('inputArea');
 const toast        = document.getElementById('toast');
 const streakNum    = document.getElementById('streakNum');
@@ -900,9 +828,6 @@ const streakNum    = document.getElementById('streakNum');
 function init() {
   const stats = loadStats();
   streakNum.textContent = stats.streak;
-
-  // Set hint
-  hintText.textContent = puzzle.hint;
 
   // Render dots
   renderDots();
@@ -932,6 +857,8 @@ function setImage(guessNum) {
   const imgIndex = Math.min(guessNum, 5);
   const imgData = puzzle.images[imgIndex];
   locationImg.src = imgData.src;
+  const zoomScales = [8.0, 6.0, 4.0, 2.0, 1.5, 1.0];
+  locationImg.style.transform = `scale(${zoomScales[imgIndex]})`;
   zoomLabel.textContent = `🔍 ×${imgData.zoom} ZOOM`;
   guessBadge.textContent = state.won || state.lost
     ? (state.won ? '✓ SOLVED' : '✗ REVEALED')
@@ -940,11 +867,26 @@ function setImage(guessNum) {
 
 function renderDots() {
   guessDots.innerHTML = '';
+
   for (let i = 0; i < 6; i++) {
     const dot = document.createElement('div');
     dot.className = 'guess-dot';
-    if (i < state.guesses.length) dot.classList.add('used');
-    else if (i === state.guesses.length && !state.won && !state.lost) dot.classList.add('current');
+
+    if (i < state.guesses.length) {
+      const result = state.guesses[i].result;
+
+      if (result === 'correct') {
+        dot.classList.add('used'); // keep green or change if you want
+      } else if (result === 'close') {
+        dot.classList.add('close'); // ← THIS is what you want
+      } else {
+        dot.classList.add('used'); // wrong = red (current behavior)
+      }
+
+    } else if (i === state.guesses.length && !state.won && !state.lost) {
+      dot.classList.add('current');
+    }
+
     guessDots.appendChild(dot);
   }
 }
@@ -966,6 +908,7 @@ function addGuessRow(text, result, num) {
 function evaluateGuess(input) {
   const normalized = input.trim().toLowerCase();
   const correctAliases = puzzle.aliases.map(a => a.toLowerCase());
+  const normalizedClose = puzzle.close.map(b => b.toLowerCase());
 
   if (correctAliases.includes(normalized) || normalized === puzzle.name.toLowerCase()) {
     return 'correct';
@@ -976,6 +919,7 @@ function evaluateGuess(input) {
     alias.includes(normalized) || normalized.includes(alias.split(' ')[0])
   );
   if (partialMatch && normalized.length >= 3) return 'close';
+  if (normalizedClose.includes(normalized)) return 'close';
 
   return 'wrong';
 }
@@ -1003,7 +947,7 @@ function submitGuess() {
 
   if (result === 'correct') {
     state.won = true;
-    setImage(guessNum - 1); // Show current (fully revealed) image
+    setImage(5); // Show current (fully revealed) image
     renderDots();
     saveState(state);
     updateStats(true, guessNum);
@@ -1114,11 +1058,20 @@ suggestions.addEventListener('click', e => {
   if (!item) return;
   guessInput.value = item.dataset.val;
   suggestions.classList.remove('visible');
-  guessInput.focus();
+  submitGuess();
 });
 
 guessInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitGuess();
+  if (e.key === 'Enter') {
+      const firstSuggestion = suggestions.querySelector('.suggestion-item');
+    if (suggestions.classList.contains('visible') && firstSuggestion) {
+      guessInput.value = firstSuggestion.dataset.val;
+      suggestions.classList.remove('visible');
+      submitGuess();
+    } else {
+      submitGuess();
+    }
+  }
   if (e.key === 'Escape') suggestions.classList.remove('visible');
 });
 
@@ -1139,6 +1092,9 @@ document.getElementById('helpModal').addEventListener('click', e => {
   if (e.target === document.getElementById('helpModal'))
     document.getElementById('helpModal').classList.remove('show');
 });
+document.getElementById('closeResult').addEventListener('click', () => {
+  document.getElementById('resultOverlay').classList.remove('show');
+});
 
 let toastTimer;
 function showToast(msg) {
@@ -1147,6 +1103,18 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
 }
+
+//RESET BUTTON FOR AWESOME TESTING PURPOSES
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset today’s puzzle and stats?')) return;
+
+  // Clear game state
+  localStorage.removeItem('clawedle_state');
+
+  // Reload page
+  location.reload();
+});
 
 // ─── KICK OFF ────────────────────────────────────────────────────────────────
 init();
